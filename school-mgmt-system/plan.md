@@ -8,25 +8,27 @@ This project aims to develop a simplified School Management System using Java Sw
 
 This file, `plan.md`, serves as the high-level checklist for implementing the School Management System. Refer back to this plan to track progress and understand the sequence of development steps derived from the initial requirements document. Each numbered item represents a significant milestone or component to be built.
 
+**Important Note (Password Hashing):** Due to persistent issues integrating the `jBCrypt` library, the password hashing approach was changed to use Java's built-in `MessageDigest` (SHA-256) combined with a unique, randomly generated salt per user (stored in a new `Salt` column in the `Users` table). While functional, this is less resistant to brute-force attacks than bcrypt. If library issues can be resolved later, switching back to bcrypt is recommended for enhanced security.
+
 ---
 
 ## Implementation Steps
 
-1.  **Setup Project Structure:** Create the base directories (`model`, `view`, `controller`, `util`) as outlined in the requirements.
-2.  **Database Connection Utility:** Implement the `util/database/DatabaseConnection.java` class to manage connections to the `MySQL` database (`school_management` on `localhost:3306`, user `root`, password `17Issure!`).
-3.  **Password Security Utility:** Implement the `util/security/PasswordUtil.java` class for password hashing (`bcrypt` recommended) and verification, and random password generation.
-4.  **Input Validation Utility:** Implement the `util/validation/InputValidator.java` class with static methods for validating email, required fields, etc.
-5.  **User Entity & Enum:** Create the `model/entities/User.java` entity and the `model/entities/UserRole.java` enum.
-6.  **Course Entity:** Create the `model/entities/Course.java` entity.
-7.  **Enrollment Entity:** Create the `model/entities/Enrollment.java` entity.
-8.  **Message Entity:** Create the `model/entities/Message.java` entity.
-9.  **UserDAO Implementation:** Implement the `model/dao/UserDAO.java` class with methods for CRUD operations on the `Users` table, using `PreparedStatements`. Include methods for finding users by email, role, and handling password reset tokens.
-10. **CourseDAO Implementation:** Implement the `model/dao/CourseDAO.java` class for CRUD operations on the `Courses` table, handling teacher assignments and enrollment counts.
-11. **EnrollmentDAO Implementation:** Implement the `model/dao/EnrollmentDAO.java` class for managing student enrollments in courses.
-12. **MessageDAO Implementation:** Implement the `model/dao/MessageDAO.java` class for handling messages between users.
-13. **User Session Management:** Implement the `util/UserSession.java` class (using static fields/methods for simplicity) to track the currently logged-in user.
-14. **Login View & Controller:** Implement the `view/auth/LoginView.java` (`Swing` components) and the basic login/logout logic in `controller/auth/AuthController.java`. Integrate with `UserDAO` and `PasswordUtil`.
-15. **Main Application Frame & AppController:** Implement `view/common/MainApplicationFrame.java` to hold different views and `controller/AppController.java` to manage view transitions and application flow (login -> dashboard).
+1.  ~~**Setup Project Structure:** Create the base directories (`model`, `view`, `controller`, `util`) as outlined in the requirements.~~ (Done)
+2.  ~~**Database Connection Utility:** Implement the `util/database/DatabaseConnection.java` class to manage connections to the `MySQL` database (`school_management` on `localhost:3306`, user `root`, password `17Issure!`).~~ (Done)
+3.  ~~**Password Security Utility:** Implement the `util/security/PasswordUtil.java` class for password hashing (`MessageDigest` w/ SHA-256 + Salting, fallback due to jBCrypt issues) and verification, random password generation, and token generation.~~ (Done)
+4.  ~~**Input Validation Utility:** Implement the `util/validation/InputValidator.java` class with static methods for validating email, required fields, etc.~~ (Done - Includes interactive test)
+5.  ~~**User Entity & Enum:** Create the `model/entities/User.java` entity (including `Salt` field) and the `model/entities/UserRole.java` enum.~~ (Done - Includes interactive test)
+6.  ~~**Course Entity:** Create the `model/entities/Course.java` entity.~~ (Done - Includes interactive test)
+7.  ~~**Enrollment Entity:** Create the `model/entities/Enrollment.java` entity.~~ (Done - Includes interactive test)
+8.  ~~**Message Entity:** Create the `model/entities/Message.java` entity.~~ (Done - Includes interactive test)
+9.  ~~**UserDAO Implementation:** Implement the `model/dao/UserDAO.java` class with methods for CRUD operations on the `Users` table, using `PreparedStatements` for security. **Must handle the new `Salt` column (store generated salt, retrieve salt for verification).** Include methods for finding users by ID, email, role, and handling password reset tokens/expiry as per the schema and requirements.~~ (Done - Compiled OK)
+10. ~~**CourseDAO Implementation:** Implement the `model/dao/CourseDAO.java` class for CRUD operations on the `Courses` table, handling teacher assignments and enrollment counts. Use `PreparedStatements`.~~ (Done - Tested OK)
+11. ~~**EnrollmentDAO Implementation:** Implement the `model/dao/EnrollmentDAO.java` class for managing student enrollments in courses.~~ (Done - Tested OK)
+12. ~~**MessageDAO Implementation:** Implement the `model/dao/MessageDAO.java` class for handling messages between users.~~ (Done - Tested OK)
+13. ~~**User Session Management:** Implement the `util/UserSession.java` class (using static fields/methods for simplicity) to track the currently logged-in user.~~ (Done - Tested OK)
+14. ~~**Login View & Controller:** Implement the `view/auth/LoginView.java` (`Swing` components) and the basic login/logout logic in `controller/auth/AuthController.java`. Integrate with `UserDAO` and `PasswordUtil`.~~ (Done - Components Created)
+15. ~~**Main Application Frame & AppController:** Implement `view/common/MainApplicationFrame.java` to hold different views and `controller/AppController.java` to manage view transitions and application flow (login -> dashboard).~~ (Done - Tested Login Flow OK)
 16. **Admin Module (Core):**
     *   Implement `view/admin/AdminDashboardView.java`.
     *   Implement `view/admin/UserManagementPanel.java` and `view/admin/CourseManagementPanel.java`.

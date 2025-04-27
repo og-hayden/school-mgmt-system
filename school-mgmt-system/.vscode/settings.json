@@ -1,7 +1,10 @@
 {
-    "java.project.sourcePaths": ["src"],
+    "java.project.sourcePaths": [
+        "src\\main\\java"
+    ],
     "java.project.outputPath": "bin",
     "java.project.referencedLibraries": [
-        "lib/**/*.jar"
+        "c:\\Users\\hismi\\School\\school-mgmt-system\\school-mgmt-system\\lib\\mysql-connector-j-9.3.0.jar",
+        "c:\\Users\\hismi\\School\\school-mgmt-system\\school-mgmt-system\\lib\\jbcrypt-0.4.jar"
     ]
 }
