@@ -205,8 +205,6 @@ public class EnrollmentDAO {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         List<User> students = new ArrayList<>();
-        // We need a UserDAO instance or map the user directly here
-        // For simplicity here, we'll map directly. A UserDAO dependency is cleaner design.
 
         try {
             conn = DatabaseConnection.getConnection();
@@ -215,8 +213,6 @@ public class EnrollmentDAO {
             rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                 // Manually map ResultSet to User object - duplicating UserDAO logic slightly
-                 // Ideally, call a map method from UserDAO if possible
                  students.add(mapResultSetToUser_Local(rs)); 
             }
         } catch (SQLException e) {
@@ -225,6 +221,37 @@ public class EnrollmentDAO {
             DatabaseConnection.closeResources(conn, pstmt, rs);
         }
         return students;
+    }
+
+    /**
+     * Retrieves all courses (as Course objects) that a specific student is enrolled in.
+     *
+     * @param studentId The UserID of the student.
+     * @return A list of Course objects the student is enrolled in.
+     */
+    public List<Course> getEnrolledCoursesByStudent(int studentId) {
+        // Join Enrollments and Courses tables
+        String sql = "SELECT c.* FROM Courses c JOIN Enrollments e ON c.CourseID = e.CourseID WHERE e.StudentUserID = ? ORDER BY c.CourseCode";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<Course> courses = new ArrayList<>();
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, studentId);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                courses.add(mapResultSetToCourse_Local(rs)); 
+            }
+        } catch (SQLException e) {
+             LOGGER.log(Level.SEVERE, "Error retrieving enrolled courses for student ID: " + studentId, e);
+        } finally {
+            DatabaseConnection.closeResources(conn, pstmt, rs);
+        }
+        return courses;
     }
 
     /**
@@ -277,8 +304,6 @@ public class EnrollmentDAO {
     
     /**
      * Maps a row from the ResultSet to a User object (local version).
-     * Ideally, this mapping logic should reside solely within UserDAO.
-     * Duplicated here for getStudentsByCourse simplicity without DAO dependency.
      *
      * @param rs The ResultSet cursor, positioned at a valid row from a Users table query/join.
      * @return A User object.
@@ -300,6 +325,29 @@ public class EnrollmentDAO {
         user.setCreatedAt(rs.getTimestamp("CreatedAt"));
         user.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
         return user;
+    }
+     
+    /**
+     * Maps a row from the ResultSet to a Course object.
+     * Private helper to avoid dependency on CourseDAO here.
+     * Mirrors the logic in CourseDAO.mapResultSetToCourse.
+     */
+    private Course mapResultSetToCourse_Local(ResultSet rs) throws SQLException {
+        Course course = new Course();
+        course.setCourseID(rs.getInt("CourseID"));
+        course.setCourseCode(rs.getString("CourseCode"));
+        course.setName(rs.getString("Name"));
+        course.setMaximumCapacity(rs.getInt("MaximumCapacity"));
+        // Handle potential null for TeacherUserID
+        int teacherId = rs.getInt("TeacherUserID");
+        if (rs.wasNull()) {
+            course.setTeacherUserID(null); // Use null Integer object
+        } else {
+            course.setTeacherUserID(teacherId);
+        }
+        course.setCreatedAt(rs.getTimestamp("CreatedAt"));
+        course.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
+        return course;
     }
     
     // --- Simple DAO Tester --- 
@@ -443,11 +491,7 @@ public class EnrollmentDAO {
              System.err.println("\nAn unexpected error occurred during EnrollmentDAO testing:");
              e.printStackTrace();
         } finally {
-             // Optional: Clean up the test student and course if desired
-             // Be cautious if they might be used by other tests or manually created data
              System.out.println("\nEnrollmentDAO testing finished.");
-            // if (testStudent != null && testStudent.getUserID() > 0) userDAO.deleteUser(testStudent.getUserID());
-            // if (testCourse != null && testCourse.getCourseID() > 0) courseDAO.deleteCourse(testCourse.getCourseID());
         }
     }
 } 

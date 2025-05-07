@@ -83,7 +83,6 @@ public class MainApplicationFrame extends JFrame {
          setVisible(true);
     }
 
-    // Simple main method for testing the frame structure (optional)
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             MainApplicationFrame frame = new MainApplicationFrame();

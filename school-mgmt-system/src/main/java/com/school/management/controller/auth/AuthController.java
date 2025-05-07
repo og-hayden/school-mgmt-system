@@ -7,12 +7,12 @@ import com.school.management.util.UserSession;
 import com.school.management.util.security.PasswordUtil;
 import com.school.management.util.validation.InputValidator;
 import com.school.management.view.auth.LoginView;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 /**
  * Controller responsible for handling authentication logic,
@@ -35,8 +35,9 @@ public class AuthController implements ActionListener {
         this.userDAO = userDAO;
         this.appController = appController;
         
-        // Add this controller as the listener for the login button
+            
         this.loginView.addLoginListener(this);
+        this.loginView.addForgotPasswordListener(this); // Add listener for forgot password
     }
 
     /**
@@ -46,8 +47,15 @@ public class AuthController implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == loginView.getLoginButton()) {
+        String command = e.getActionCommand();
+        LOGGER.log(Level.FINE, "AuthController received action: {0}", command);
+        
+        if ("Login".equals(command)) {
             handleLoginAttempt();
+        } else if ("Forgot Password".equals(command)) {
+            handleForgotPasswordAction();
+        } else {
+             LOGGER.log(Level.WARNING, "Unknown action command in AuthController: {0}", command);
         }
     }
 
@@ -90,13 +98,10 @@ public class AuthController implements ActionListener {
                 LOGGER.log(Level.INFO, "Attempting password check for user: {0}", email);
                 LOGGER.log(Level.INFO, "   Retrieved Salt (Base64): {0}", salt);
                 LOGGER.log(Level.INFO, "   Retrieved Hash (Base64): {0}", storedHash);
-                LOGGER.log(Level.INFO, "   Password entered (length): {0}", password.length());
-                // --- TEMPORARY DEBUG: Log plain password - REMOVE AFTER DEBUGGING --- 
-                // LOGGER.log(Level.WARNING, "[SECURITY RISK - DEBUG ONLY] Password string being checked: ''{0}''", password);
-                // --- END TEMPORARY DEBUG --- 
+                LOGGER.log(Level.INFO, "   Password entered (length): {0}", password.length()); 
                 
                 if (salt == null || storedHash == null) {
-                     loginView.displayError("Authentication error. Please contact support."); // Should not happen
+                     loginView.displayError("Authentication error. Please contact support.");
                      LOGGER.log(Level.SEVERE, "Login attempt failed: User {0} has missing salt or hash.", email);
                 } else if (PasswordUtil.checkPassword(password, storedHash, salt)) {
                     // --- Login Successful ---
@@ -107,9 +112,8 @@ public class AuthController implements ActionListener {
                     if (appController != null) {
                         appController.onLoginSuccess(user);
                     } else {
-                        // This case should ideally not happen in the full application
                         LOGGER.log(Level.WARNING, "AppController is null, cannot navigate after login.");
-                        loginView.displayError("Login successful, but navigation failed."); // Inform user if possible
+                        loginView.displayError("Login successful, but navigation failed.");
                     }
                 } else {
                     // --- Login Failed (Incorrect Password) ---
@@ -127,15 +131,59 @@ public class AuthController implements ActionListener {
     }
     
     /**
+     * Handles the "Forgot Password?" button click.
+     * Prompts the user for their email and shows a confirmation message.
+     */
+    private void handleForgotPasswordAction() {
+        LOGGER.info("Forgot Password action initiated.");
+        
+        String email = JOptionPane.showInputDialog(
+            loginView, // Parent component
+            "Please enter your account email address:", 
+            "Forgot Password", 
+            JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (email != null) { // User didn't cancel
+            email = email.trim();
+            if (InputValidator.isValidEmail(email)) {
+                // Notionally send the email
+                LOGGER.log(Level.INFO, "Password reset requested for email: {0}. (Notional email sent)", email);
+                JOptionPane.showMessageDialog(
+                    loginView, 
+                    "If an account exists for " + email + ", a password reset link has been sent.",
+                    "Password Reset Requested",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            } else if (!email.isEmpty()) {
+                 // Email entered but invalid format
+                 JOptionPane.showMessageDialog(
+                     loginView, 
+                     "Invalid email format entered.",
+                     "Input Error",
+                     JOptionPane.ERROR_MESSAGE
+                 );
+            } else {
+                 // Empty email entered (or just spaces)
+                 JOptionPane.showMessageDialog(
+                     loginView, 
+                     "Email address cannot be empty.",
+                     "Input Error",
+                     JOptionPane.ERROR_MESSAGE
+                 );
+            }
+        } else {
+             LOGGER.info("Forgot Password dialog cancelled by user.");
+        }
+    }
+
+    /**
      * Securely clears a character array, typically used for passwords.
      * @param array The character array to clear.
      */
     private void clearPasswordArray(char[] array) {
         if (array != null) {
-            Arrays.fill(array, '\0'); // Overwrite with null characters
+            Arrays.fill(array, '\0'); 
         }
     }
-
-    // Placeholder for logout logic if needed directly in this controller
-    // public void handleLogout() { ... }
 } 

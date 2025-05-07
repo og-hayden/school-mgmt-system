@@ -132,6 +132,36 @@ public class MessageDAO {
     }
 
     /**
+     * Retrieves a specific message by its ID.
+     *
+     * @param messageId The ID of the message.
+     * @return The Message object, or null if not found.
+     */
+    public Message getMessageById(int messageId) {
+        String sql = "SELECT * FROM Messages WHERE MessageID = ?";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Message message = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, messageId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                message = mapResultSetToMessage(rs);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving message by ID: " + messageId, e);
+        } finally {
+            DatabaseConnection.closeResources(conn, pstmt, rs);
+        }
+        return message;
+    }
+
+    /**
      * Marks a specific message as read.
      *
      * @param messageId The ID of the message to mark as read.
@@ -153,10 +183,7 @@ public class MessageDAO {
             if (success) {
                 LOGGER.log(Level.INFO, "Message marked as read: ID {0}", messageId);
             } else {
-                 // Could be because message didn't exist or was already read
                  LOGGER.log(Level.INFO, "Message not marked as read (may not exist or already read): ID {0}", messageId);
-                 // Consider returning true even if already read, depending on desired behavior
-                 // Check if message exists if 0 rows affected and need stricter confirmation
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error marking message as read: ID " + messageId, e);
@@ -167,7 +194,7 @@ public class MessageDAO {
     }
     
     /**
-     * Deletes a message by its ID. (Optional, use with caution)
+     * Deletes a message by its ID.
      *
      * @param messageId The ID of the message to delete.
      * @return true if deleted successfully, false otherwise.
@@ -298,7 +325,7 @@ public class MessageDAO {
                  System.out.println("   Found recipient ID: " + recipient.getUserID());
             }
             
-             // 3. Ensure Course Context Exists (Optional)
+             // 3. Ensure Course Context Exists
              System.out.println("\n3. Ensuring course context exists (optional)...");
              courseContext = courseDAO.getCourseByCode(courseCode);
               if (courseContext == null) {
@@ -376,10 +403,6 @@ public class MessageDAO {
             e.printStackTrace();
         } finally {
              System.out.println("\nMessageDAO testing finished.");
-             // Optional: Cleanup test users/course - use with caution
-             // if(sender != null && sender.getUserID() > 0) userDAO.deleteUser(sender.getUserID());
-             // if(recipient != null && recipient.getUserID() > 0) userDAO.deleteUser(recipient.getUserID());
-             // if(courseContext != null && courseContext.getCourseID() > 0) courseDAO.deleteCourse(courseContext.getCourseID());
         }
     }
 } 

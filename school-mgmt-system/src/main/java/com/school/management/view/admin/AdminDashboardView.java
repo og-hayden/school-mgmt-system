@@ -12,7 +12,7 @@ public class AdminDashboardView extends JPanel {
 
     private JButton userManagementButton;
     private JButton courseManagementButton;
-    // private JButton profileButton; // Add later if needed
+    private JButton profileButton;
     private JButton logoutButton;
 
     public AdminDashboardView() {
@@ -23,12 +23,14 @@ public class AdminDashboardView extends JPanel {
     private void initComponents() {
         userManagementButton = new JButton("Manage Users");
         courseManagementButton = new JButton("Manage Courses");
+        profileButton = new JButton("View Profile");
         logoutButton = new JButton("Logout");
         
-        // Style buttons (optional)
+
         Dimension buttonSize = new Dimension(200, 40);
         userManagementButton.setPreferredSize(buttonSize);
         courseManagementButton.setPreferredSize(buttonSize);
+        profileButton.setPreferredSize(buttonSize);
         logoutButton.setPreferredSize(buttonSize);
     }
 
@@ -52,7 +54,7 @@ public class AdminDashboardView extends JPanel {
         
         buttonPanel.add(userManagementButton, gbc);
         buttonPanel.add(courseManagementButton, gbc);
-        // buttonPanel.add(profileButton, gbc);
+        buttonPanel.add(profileButton, gbc);
         
         // Add logout button separately or at the bottom
         gbc.weighty = 1.0; // Push logout down if centered
@@ -71,11 +73,6 @@ public class AdminDashboardView extends JPanel {
 
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Padding around the whole panel
     }
-
-    // --- Getters for Controller (if needed, maybe not) ---
-    // public JButton getUserManagementButton() { return userManagementButton; }
-    // public JButton getCourseManagementButton() { return courseManagementButton; }
-    // public JButton getLogoutButton() { return logoutButton; }
     
     // --- Action Listeners ---
 
@@ -85,6 +82,10 @@ public class AdminDashboardView extends JPanel {
 
     public void addCourseManagementListener(ActionListener listener) {
         courseManagementButton.addActionListener(listener);
+    }
+
+    public void addProfileListener(ActionListener listener) {
+        profileButton.addActionListener(listener);
     }
 
     public void addLogoutListener(ActionListener listener) {
@@ -114,11 +115,9 @@ public class AdminDashboardView extends JPanel {
             // Add simple listeners for testing
             dashboardView.addUserManagementListener(e -> System.out.println("Manage Users button clicked"));
             dashboardView.addCourseManagementListener(e -> System.out.println("Manage Courses button clicked"));
+            dashboardView.addProfileListener(e -> System.out.println("View Profile button clicked"));
             dashboardView.addLogoutListener(e -> {
                 System.out.println("Logout button clicked");
-                // In real app, this would trigger controller logout
-                // For test, maybe close the window
-                // frame.dispose(); 
              });
              
             frame.getContentPane().add(dashboardView);

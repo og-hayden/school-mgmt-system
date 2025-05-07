@@ -7,7 +7,6 @@ import com.school.management.model.dao.UserDAO;
 import com.school.management.model.entities.*;
 import com.school.management.util.database.DatabaseConnection;
 import com.school.management.util.security.PasswordUtil;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -19,7 +18,6 @@ import java.util.logging.Logger;
 
 /**
  * Utility class to set up initial test data in the database.
- * WARNING: Running the main method will clear existing data in relevant tables.
  */
 public class TestDataSetup {
 

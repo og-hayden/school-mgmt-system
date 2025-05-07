@@ -7,6 +7,8 @@ import com.school.management.util.database.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,7 +53,7 @@ public class CourseDAO {
                 }
             }
         } catch (SQLException e) {
-            if ("23000".equals(e.getSQLState())) { // Unique constraint violation (likely CourseCode)
+            if ("23000".equals(e.getSQLState())) {
                 LOGGER.log(Level.WARNING, "Attempted to add course with duplicate CourseCode: " + course.getCourseCode(), e);
             } else {
                  LOGGER.log(Level.SEVERE, "Error adding course: " + course.getCourseCode(), e);
@@ -214,7 +216,7 @@ public class CourseDAO {
             }
 
         } catch (SQLException e) {
-             if ("23000".equals(e.getSQLState())) { // Unique constraint violation (likely CourseCode)
+             if ("23000".equals(e.getSQLState())) {
                  LOGGER.log(Level.WARNING, "Attempted to update course ID {0} with duplicate CourseCode: {1}", new Object[]{course.getCourseID(), course.getCourseCode()});
              } else {
                 LOGGER.log(Level.SEVERE, "Error updating course: ID " + course.getCourseID(), e);
@@ -265,7 +267,6 @@ public class CourseDAO {
      * @return true if the assignment was successful, false otherwise.
      */
     public boolean assignTeacher(int courseId, int teacherId) {
-        // Optional: Check if teacherId corresponds to a user with TEACHER role first (in service layer ideally)
         String sql = "UPDATE Courses SET TeacherUserID = ? WHERE CourseID = ?";
         return executeSimpleUpdate(sql, teacherId, courseId, "assign teacher to course ID " + courseId);
     }
@@ -285,14 +286,14 @@ public class CourseDAO {
      * Gets the current number of students enrolled in a specific course.
      *
      * @param courseId The ID of the course.
-     * @return The number of enrolled students, or -1 if an error occurs.
+     * @return The number of enrolled students, or 0 if the course is not found or has no enrollments.
      */
     public int getEnrollmentCount(int courseId) {
         String sql = "SELECT COUNT(*) FROM Enrollments WHERE CourseID = ?";
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        int count = -1;
+        int count = 0;
 
         try {
             conn = DatabaseConnection.getConnection();
@@ -304,12 +305,109 @@ public class CourseDAO {
                 count = rs.getInt(1);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting enrollment count for course ID: " + courseId, e);
+            LOGGER.log(Level.SEVERE, "Error getting enrollment count for CourseID: " + courseId, e);
+            // Return 0 or consider throwing an exception depending on desired error handling
         } finally {
             DatabaseConnection.closeResources(conn, pstmt, rs);
         }
         return count;
     }
+    
+    /**
+     * Retrieves a map of CourseID to enrollment count for a given list of CourseIDs.
+     *
+     * @param courseIds A list of CourseIDs.
+     * @return A Map where the key is CourseID and the value is the enrollment count.
+     *         Returns an empty map if the input list is null or empty, or on error.
+     */
+    public Map<Integer, Integer> getEnrollmentCounts(List<Integer> courseIds) {
+        Map<Integer, Integer> enrollmentCounts = new HashMap<>();
+        if (courseIds == null || courseIds.isEmpty()) {
+            return enrollmentCounts;
+        }
+
+        // Build IN clause for course IDs
+        StringBuilder sqlBuilder = new StringBuilder("SELECT CourseID, COUNT(*) as EnrollmentCount FROM Enrollments WHERE CourseID IN (");
+        for (int i = 0; i < courseIds.size(); i++) {
+            sqlBuilder.append("?");
+            if (i < courseIds.size() - 1) {
+                sqlBuilder.append(",");
+            }
+        }
+        sqlBuilder.append(") GROUP BY CourseID");
+
+        String sql = sqlBuilder.toString();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+
+            for (int i = 0; i < courseIds.size(); i++) {
+                pstmt.setInt(i + 1, courseIds.get(i));
+            }
+
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                enrollmentCounts.put(rs.getInt("CourseID"), rs.getInt("EnrollmentCount"));
+            }
+            
+            // Add courses with 0 enrollments if they exist but weren't in the result set
+            for(Integer courseId : courseIds) {
+                enrollmentCounts.putIfAbsent(courseId, 0);
+            }
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting enrollment counts for multiple courses.", e);
+            // Return potentially partial map or empty on error
+        } finally {
+            DatabaseConnection.closeResources(conn, pstmt, rs);
+        }
+        return enrollmentCounts;
+    }
+    
+     /**
+      * Retrieves all courses that a specific student is NOT enrolled in and are NOT full.
+      *
+      * @param studentId The UserID of the student.
+      * @return A list of available Course objects.
+      */
+     public List<Course> getAvailableCourses(int studentId) {
+         // SQL to get courses where the student is NOT enrolled
+         // AND the current enrollment count is less than the maximum capacity.
+         // I'm using a LEFT JOIN to count enrollments and filter.
+         String sql = """
+             SELECT c.* 
+             FROM Courses c
+             LEFT JOIN (SELECT CourseID, COUNT(*) as CurrentEnrollment FROM Enrollments GROUP BY CourseID) ec ON c.CourseID = ec.CourseID
+             WHERE c.CourseID NOT IN (SELECT CourseID FROM Enrollments WHERE StudentUserID = ?)
+             AND (ec.CurrentEnrollment IS NULL OR ec.CurrentEnrollment < c.MaximumCapacity)
+             ORDER BY c.CourseCode
+             """;
+ 
+         Connection conn = null;
+         PreparedStatement pstmt = null;
+         ResultSet rs = null;
+         List<Course> courses = new ArrayList<>();
+ 
+         try {
+             conn = DatabaseConnection.getConnection();
+             pstmt = conn.prepareStatement(sql);
+             pstmt.setInt(1, studentId);
+             rs = pstmt.executeQuery();
+ 
+             while (rs.next()) {
+                 courses.add(mapResultSetToCourse(rs));
+             }
+         } catch (SQLException e) {
+              LOGGER.log(Level.SEVERE, "Error retrieving available courses for student ID: " + studentId, e);
+         } finally {
+             DatabaseConnection.closeResources(conn, pstmt, rs);
+         }
+         return courses;
+     }
 
     // --- Helper Methods ---
 
@@ -526,10 +624,6 @@ public class CourseDAO {
         } finally {
             // 10. Final Cleanup
              System.out.println("\n10. Final cleanup...");
-             // No need to call getCourseByCode again if 'existing' was already checked 
-             // However, if an error happened before 'existing' was set, we might need to re-check
-             // For simplicity in this test, we assume 'existing' might still hold the value or be null.
-             // A more robust test might re-query here.
              if (existing != null && existing.getCourseID() > 0) { // Check if we had a valid course ID
                  System.out.println("   Deleting test course (ID: " + existing.getCourseID() + ")...");
                  success = courseDAO.deleteCourse(existing.getCourseID());

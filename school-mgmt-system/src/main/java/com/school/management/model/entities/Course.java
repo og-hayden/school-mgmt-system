@@ -62,7 +62,7 @@ public class Course {
     }
 
     // Setters
-    public void setCourseID(int courseID) { // Typically set only by DAO from DB
+    public void setCourseID(int courseID) { 
         this.courseID = courseID;
     }
 
@@ -78,15 +78,15 @@ public class Course {
         this.maximumCapacity = maximumCapacity;
     }
 
-    public void setTeacherUserID(Integer teacherUserID) { // Accept Integer
+    public void setTeacherUserID(Integer teacherUserID) { 
         this.teacherUserID = teacherUserID;
     }
 
-    public void setCreatedAt(Timestamp createdAt) { // Typically set by DAO
+    public void setCreatedAt(Timestamp createdAt) { 
         this.createdAt = createdAt;
     }
 
-    public void setUpdatedAt(Timestamp updatedAt) { // Typically set by DAO
+    public void setUpdatedAt(Timestamp updatedAt) { 
         this.updatedAt = updatedAt;
     }
 
@@ -120,10 +120,6 @@ public class Course {
     
     // --- Simple Interactive Tester --- 
 
-    /**
-     * Simple main method to test Course object creation.
-     * Compile and run this file directly to test.
-     */
     public static void main(String[] args) {
         System.out.println("Testing Course Entity...");
 

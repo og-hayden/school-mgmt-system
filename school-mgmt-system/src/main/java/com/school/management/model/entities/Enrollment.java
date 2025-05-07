@@ -44,7 +44,7 @@ public class Enrollment {
     }
 
     // Setters
-    public void setEnrollmentID(int enrollmentID) { // Typically set only by DAO from DB
+    public void setEnrollmentID(int enrollmentID) { 
         this.enrollmentID = enrollmentID;
     }
 
@@ -56,7 +56,7 @@ public class Enrollment {
         this.courseID = courseID;
     }
 
-    public void setEnrollmentDate(Timestamp enrollmentDate) { // Typically set by DAO or default value
+    public void setEnrollmentDate(Timestamp enrollmentDate) { 
         this.enrollmentDate = enrollmentDate;
     }
 
@@ -91,10 +91,6 @@ public class Enrollment {
     
     // --- Simple Interactive Tester --- 
 
-    /**
-     * Simple main method to test Enrollment object creation.
-     * Compile and run this file directly to test.
-     */
     public static void main(String[] args) {
         System.out.println("Testing Enrollment Entity...");
 

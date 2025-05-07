@@ -17,22 +17,17 @@ public class DatabaseConnection {
     // Logger for logging database related messages and errors
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
 
-    // Database connection parameters - Consider externalizing these in a real application
     private static final String DB_URL = "jdbc:mysql://localhost:3306/school_management?useSSL=false&serverTimezone=UTC";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "17Issure!"; // Store securely!
+    private static final String DB_PASSWORD = "17Issure!"; // No, this isn't my actual password. Don't even try it!
 
-    // Static block to load the MySQL JDBC driver when the class is loaded
     static {
         try {
-            // Load the MySQL JDBC driver
-            // The newInstance() call is deprecated but Class.forName() handles registration
             Class.forName("com.mysql.cj.jdbc.Driver");
             LOGGER.info("MySQL JDBC Driver registered successfully.");
         } catch (ClassNotFoundException e) {
             LOGGER.log(Level.SEVERE, "MySQL JDBC Driver not found.", e);
-            // Consider throwing a runtime exception if the driver is essential and not found
-             throw new RuntimeException("Failed to load MySQL JDBC Driver", e);
+            throw new RuntimeException("Failed to load MySQL JDBC Driver", e);
         }
     }
 
@@ -83,9 +78,9 @@ public class DatabaseConnection {
         if (stmt != null) {
             try {
                 stmt.close();
-                 LOGGER.log(Level.FINE, "Statement closed."); // Use FINE level for less critical logs
+                 LOGGER.log(Level.FINE, "Statement closed."); 
             } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Failed to close statement.", e); // Warning might be more appropriate
+                 LOGGER.log(Level.WARNING, "Failed to close statement.", e); 
             }
         }
     }
@@ -100,16 +95,15 @@ public class DatabaseConnection {
         if (rs != null) {
             try {
                 rs.close();
-                 LOGGER.log(Level.FINE, "ResultSet closed."); // Use FINE level
+                 LOGGER.log(Level.FINE, "ResultSet closed."); 
             } catch (SQLException e) {
-                 LOGGER.log(Level.WARNING, "Failed to close result set.", e); // Warning might be more appropriate
+                 LOGGER.log(Level.WARNING, "Failed to close result set.", e); 
             }
         }
     }
 
     /**
      * Utility method to close Connection, Statement, and ResultSet resources safely.
-     * This is often used in a finally block to ensure resources are released.
      *
      * @param conn The Connection to close (can be null).
      * @param stmt The Statement to close (can be null).
@@ -125,7 +119,6 @@ public class DatabaseConnection {
 
      /**
      * Utility method to close Connection and Statement resources safely.
-     * Useful when no ResultSet is involved.
      *
      * @param conn The Connection to close (can be null).
      * @param stmt The Statement to close (can be null).
@@ -140,14 +133,11 @@ public class DatabaseConnection {
 
     /**
      * Simple main method to test the database connection.
-     * Compile and run this file directly with the MySQL Connector/J JAR in the classpath.
      */
     public static void main(String[] args) {
         System.out.println("Attempting to connect to database...");
         Connection connection = null;
         try {
-            // Explicitly load driver in main for standalone test robustness
-            // Though the static block should handle this in normal app flow
             try {
                  Class.forName("com.mysql.cj.jdbc.Driver"); 
                  System.out.println("MySQL JDBC Driver loaded successfully in test.");
@@ -162,8 +152,6 @@ public class DatabaseConnection {
             if (connection != null && !connection.isClosed()) {
                 System.out.println("SUCCESS: Database connection established!");
                 System.out.println("DB URL: " + DB_URL);
-                // Optional: You could run a simple query here like "SELECT 1" 
-                // using a statement and result set, then close them.
             } else {
                 System.err.println("FAILURE: Failed to establish database connection. getConnection() returned null or closed connection.");
             }
@@ -177,7 +165,6 @@ public class DatabaseConnection {
             System.err.println("2. Database 'school_management' exists.");
             System.err.println("3. User 'root' exists with the correct password ('17Issure!').");
             System.err.println("4. User 'root' has privileges to connect to 'school_management' from localhost.");
-            // e.printStackTrace(); // Uncomment for full stack trace if needed
         } catch (Exception e) {
              System.err.println("FAILURE: An unexpected error occurred during connection test.");
              e.printStackTrace();

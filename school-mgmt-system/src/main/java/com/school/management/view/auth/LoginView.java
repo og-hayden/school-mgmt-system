@@ -13,6 +13,7 @@ public class LoginView extends JPanel {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JButton loginButton;
+    private JButton forgotPasswordButton;
     private JLabel errorLabel;
 
     public LoginView() {
@@ -24,6 +25,13 @@ public class LoginView extends JPanel {
         emailField = new JTextField(20);
         passwordField = new JPasswordField(20);
         loginButton = new JButton("Login");
+        forgotPasswordButton = new JButton("Forgot Password?");
+        forgotPasswordButton.setBorderPainted(false);
+        forgotPasswordButton.setContentAreaFilled(false);
+        forgotPasswordButton.setForeground(Color.BLUE);
+        forgotPasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        forgotPasswordButton.setHorizontalAlignment(SwingConstants.CENTER);
+
         errorLabel = new JLabel(" "); // Initialize with space to reserve height
         errorLabel.setForeground(Color.RED);
         errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -86,9 +94,18 @@ public class LoginView extends JPanel {
         gbc.gridy = 4;
         gbc.gridwidth = 2; // Span across both columns
         gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE; // Don't stretch button horizontally
-        gbc.insets = new Insets(15, 5, 10, 5); // Add padding above/below button
+        gbc.fill = GridBagConstraints.NONE; 
+        gbc.insets = new Insets(15, 5, 5, 5); // Reduced bottom padding
         add(loginButton, gbc);
+
+        // Forgot Password Button
+        gbc.gridx = 0;
+        gbc.gridy = 5; // Place below Login button
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(0, 5, 10, 5); // Padding top/bottom
+        add(forgotPasswordButton, gbc);
     }
 
     // --- Getters ---
@@ -105,6 +122,16 @@ public class LoginView extends JPanel {
 
     public void addLoginListener(ActionListener listener) {
         loginButton.addActionListener(listener);
+        loginButton.setActionCommand("Login"); // Ensure command is set
+    }
+
+    /**
+     * Adds an ActionListener to the Forgot Password button.
+     * @param listener The listener to add.
+     */
+    public void addForgotPasswordListener(ActionListener listener) {
+        forgotPasswordButton.addActionListener(listener);
+        forgotPasswordButton.setActionCommand("Forgot Password"); // Set command
     }
 
     // --- UI Control ---
@@ -134,7 +161,6 @@ public class LoginView extends JPanel {
                 }
             }
         } catch (Exception e) {
-            // If Nimbus is not available, use the default L&F.
              System.out.println("Nimbus L&F not found, using default.");
         }
         

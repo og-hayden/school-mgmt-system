@@ -12,8 +12,7 @@ import java.util.logging.Logger;
  * Utility class for handling password security functions.
  * Includes hashing with SHA-256 and unique salts, verification,
  * random password generation, and secure token generation.
- * NOTE: Uses SHA-256 as a fallback due to issues with integrating BCrypt library.
- * BCrypt is generally preferred for better resistance to brute-force attacks.
+ * NOTE: Uses SHA-256 as a fallback due to issues with integrating BCrypt library. Believe me, I tried.
  */
 public class PasswordUtil {
 
@@ -71,8 +70,6 @@ public class PasswordUtil {
         try {
             MessageDigest md = MessageDigest.getInstance(HASH_ALGORITHM);
 
-            // Combine salt and password bytes
-            // Prepending salt is common, order doesn't strictly matter as long as consistent
             byte[] passwordBytes = plainPassword.getBytes(StandardCharsets.UTF_8);
             byte[] combined = new byte[saltBytes.length + passwordBytes.length];
 
@@ -89,11 +86,9 @@ public class PasswordUtil {
 
         } catch (NoSuchAlgorithmException e) {
             LOGGER.log(Level.SEVERE, "Fatal: SHA-256 algorithm not found.", e);
-            // This should theoretically never happen with SHA-256, but handle defensively
             throw new RuntimeException("Could not find SHA-256 algorithm", e);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error hashing password.", e);
-            // Return null or throw a custom exception
             return null;
         }
     }

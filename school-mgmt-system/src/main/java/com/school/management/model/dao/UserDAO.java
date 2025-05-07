@@ -7,14 +7,16 @@ import com.school.management.util.security.PasswordUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Data Access Object for the User entity.
  * Handles all CRUD operations and other queries related to the Users table.
- * IMPORTANT: Uses SHA-256 with salting due to BCrypt library issues during development.
+ * IMPORTANT: Uses SHA-256 with salting due to BCrypt library... issues during development. Super fun.
  */
 public class UserDAO {
 
@@ -28,8 +30,6 @@ public class UserDAO {
      * @return true if the user was added successfully, false otherwise.
      */
     public boolean addUser(User user) {
-        // Hashing and salt generation should be done *before* calling this method.
-        // We trust the user object passed in.
         if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty() || 
             user.getSalt() == null || user.getSalt().isEmpty()) {
             LOGGER.log(Level.SEVERE, "Attempted to add user {0} with missing PasswordHash or Salt.", user.getEmail());
@@ -478,4 +478,95 @@ public class UserDAO {
             pstmt.setNull(parameterIndex, Types.VARCHAR);
         }
     }
+
+    /**
+     * Retrieves a map of UserID to "FirstName LastName" for a given list of UserIDs.
+     * Useful for quickly getting display names without fetching full User objects.
+     *
+     * @param userIds A list of UserIDs to fetch names for.
+     * @return A Map where the key is the UserID and the value is the user's full name.
+     *         Returns an empty map if the input list is null/empty or if an error occurs.
+     */
+    public Map<Integer, String> getUserNamesByIds(List<Integer> userIds) {
+        Map<Integer, String> userNames = new HashMap<>();
+        if (userIds == null || userIds.isEmpty()) {
+            return userNames; // Return empty map if no IDs provided
+        }
+
+        // Build the IN clause string: (?, ?, ?, ...)
+        StringBuilder sqlBuilder = new StringBuilder("SELECT UserID, FirstName, LastName FROM Users WHERE UserID IN (");
+        for (int i = 0; i < userIds.size(); i++) {
+            sqlBuilder.append("?");
+            if (i < userIds.size() - 1) {
+                sqlBuilder.append(",");
+            }
+        }
+        sqlBuilder.append(")");
+
+        String sql = sqlBuilder.toString();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            pstmt = conn.prepareStatement(sql);
+
+            // Set the UserID parameters for the IN clause
+            for (int i = 0; i < userIds.size(); i++) {
+                pstmt.setInt(i + 1, userIds.get(i));
+            }
+
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                int userId = rs.getInt("UserID");
+                String firstName = rs.getString("FirstName");
+                String lastName = rs.getString("LastName");
+                userNames.put(userId, firstName + " " + lastName);
+            }
+            LOGGER.log(Level.FINE, "Fetched {0} user names for the provided IDs.", userNames.size());
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving user names by IDs.", e);
+            // Return potentially partially filled map or empty map on error
+        } finally {
+            DatabaseConnection.closeResources(conn, pstmt, rs);
+        }
+        return userNames;
+    }
+
+    /**
+     * Updates only the profile picture path for a given user.
+     *
+     * @param userId The ID of the user to update.
+     * @param profilePicturePath The new path to the profile picture (can be null).
+     * @return true if the update was successful, false otherwise.
+     */
+    public boolean updateProfilePicturePath(int userId, String profilePicturePath) {
+         if (userId <= 0) {
+             LOGGER.log(Level.WARNING, "Cannot update profile picture path for invalid User ID: {0}", userId);
+             return false;
+         }
+         
+         String sql = "UPDATE Users SET ProfilePicturePath = ? WHERE UserID = ?";
+         try (Connection conn = DatabaseConnection.getConnection();
+              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+     
+             pstmt.setString(1, profilePicturePath); // Path can be null
+             pstmt.setInt(2, userId);
+     
+             int affectedRows = pstmt.executeUpdate();
+             if (affectedRows > 0) {
+                 LOGGER.log(Level.INFO, "Profile picture path updated successfully for User ID: {0}", userId);
+                 return true;
+             } else {
+                 LOGGER.log(Level.WARNING, "Profile picture path update failed, no user found for ID: {0}", userId);
+                 return false;
+             }
+         } catch (SQLException e) {
+             LOGGER.log(Level.SEVERE, "Database error updating profile picture path for User ID: " + userId, e);
+             return false;
+         }
+     }
 } 

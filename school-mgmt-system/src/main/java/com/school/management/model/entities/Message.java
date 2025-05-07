@@ -70,7 +70,7 @@ public class Message {
     }
 
     // Setters
-    public void setMessageID(int messageID) { // Typically set by DAO
+    public void setMessageID(int messageID) { 
         this.messageID = messageID;
     }
 
@@ -94,7 +94,7 @@ public class Message {
         this.body = body;
     }
 
-    public void setSentTimestamp(Timestamp sentTimestamp) { // Typically set by DB default or DAO
+    public void setSentTimestamp(Timestamp sentTimestamp) { 
         this.sentTimestamp = sentTimestamp;
     }
 
@@ -126,10 +126,6 @@ public class Message {
     
     // --- Simple Interactive Tester --- 
 
-    /**
-     * Simple main method to test Message object creation.
-     * Compile and run this file directly to test.
-     */
     public static void main(String[] args) {
         System.out.println("Testing Message Entity...");
 

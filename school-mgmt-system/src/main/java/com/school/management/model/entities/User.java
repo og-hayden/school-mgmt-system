@@ -14,20 +14,18 @@ public class User {
     private String lastName;
     private String email;
     private String passwordHash; 
-    private String salt; // Added field to store the salt for password hashing
+    private String salt; 
     private UserRole role;
-    private String department; // Nullable, primarily for Teachers
-    private String profilePicturePath; // Nullable
-    private String passwordResetToken; // Nullable
-    private Timestamp passwordResetExpiry; // Nullable
+    private String department; 
+    private String profilePicturePath; 
+    private String passwordResetToken; 
+    private Timestamp passwordResetExpiry; 
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
-    // Default constructor (optional, but can be useful for frameworks/libraries)
     public User() {
     }
 
-    // Full constructor for creating User objects (e.g., from DAO)
     public User(int userID, String firstName, String lastName, String email, 
                 String passwordHash, String salt, UserRole role, String department, 
                 String profilePicturePath, String passwordResetToken, 
@@ -101,7 +99,7 @@ public class User {
     }
 
     // Setters (for fields that can be modified)
-     public void setUserID(int userID) { // Typically set only by DAO from DB
+     public void setUserID(int userID) { 
          this.userID = userID;
      }
 
@@ -145,11 +143,11 @@ public class User {
         this.passwordResetExpiry = passwordResetExpiry;
     }
 
-     public void setCreatedAt(Timestamp createdAt) { // Typically set only by DAO
+     public void setCreatedAt(Timestamp createdAt) { 
          this.createdAt = createdAt;
      }
 
-     public void setUpdatedAt(Timestamp updatedAt) { // Typically set only by DAO
+     public void setUpdatedAt(Timestamp updatedAt) { 
          this.updatedAt = updatedAt;
      }
 
@@ -183,10 +181,7 @@ public class User {
 
     // --- Simple Interactive Tester --- 
 
-    /**
-     * Simple main method to test User object creation and UserRole usage.
-     * Compile and run this file directly to test.
-     */
+
     public static void main(String[] args) {
         System.out.println("Testing User Entity and UserRole Enum...");
 

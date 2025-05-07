@@ -1,12 +1,16 @@
 package com.school.management.controller;
 
+import com.school.management.controller.admin.AdminController;
 import com.school.management.controller.auth.AuthController;
+import com.school.management.controller.teacher.TeacherController;
+import com.school.management.controller.student.StudentController;
 import com.school.management.model.dao.CourseDAO;
 import com.school.management.model.dao.EnrollmentDAO;
 import com.school.management.model.dao.MessageDAO;
 import com.school.management.model.dao.UserDAO;
 import com.school.management.model.entities.User;
 import com.school.management.model.entities.UserRole;
+import com.school.management.service.*;
 import com.school.management.util.UserSession;
 import com.school.management.view.auth.LoginView;
 import com.school.management.view.common.MainApplicationFrame;
@@ -36,23 +40,28 @@ public class AppController {
     private EnrollmentDAO enrollmentDAO;
     private MessageDAO messageDAO;
 
+    // Services
+    private UserService userService;
+    private CourseService courseService;
+    private MessageService messageService;
+
     // Views
     private LoginView loginView;
-    // Add dashboard/panel views here as they are created
+    // Admin views are managed by AdminController
     // private AdminDashboardView adminDashboardView;
-    // private TeacherDashboardView teacherDashboardView;
-    // private StudentDashboardView studentDashboardView;
+    // private UserManagementPanel userManagementPanel;
+    // private CourseManagementPanel courseManagementPanel;
+    // Teacher/Student views managed by their controllers later
 
     // Controllers
     private AuthController authController;
-    // Add other controllers here as they are created
-    // private AdminController adminController;
-    // private TeacherController teacherController;
-    // private StudentController studentController;
+    private AdminController adminController;
+    private TeacherController teacherController;
+    private StudentController studentController;
 
     public AppController() {
         // Initialize core components first
-        this.userSession = new UserSession(); // Assuming static access is intended
+        this.userSession = new UserSession();
         
         // Initialize DAOs
         this.userDAO = new UserDAO();
@@ -60,18 +69,19 @@ public class AppController {
         this.enrollmentDAO = new EnrollmentDAO();
         this.messageDAO = new MessageDAO();
         
-        // Initialize Views
-        this.loginView = new LoginView();
-        // Initialize other views...
+        // Initialize Services (after DAOs)
+        this.userService = new UserServiceImpl(userDAO);
+        this.courseService = new CourseServiceImpl(courseDAO);
+        this.messageService = new MessageServiceImpl(messageDAO);
         
-        // Initialize Controllers (pass necessary dependencies)
-        // Note: The frame needs to be created before controllers that might need it (e.g., for dialogs)
-        // Initialize the main frame AFTER other components if they need to be passed to it,
-        // OR pass the AppController itself to the frame if the frame needs to call back.
-        // For now, initialize frame first, then controllers.
+        // Initialize Views (Only LoginView needed here)
+        this.loginView = new LoginView();
+        // Admin views are created by AdminController when needed
+        
+        // Initialize Frame and AuthController
         this.mainFrame = new MainApplicationFrame(); 
         this.authController = new AuthController(loginView, userDAO, /*passwordUtil*/ null, /*userSession*/ null, /*inputValidator*/ null, this);
-        // Initialize other controllers...
+        // AdminController is initialized on first admin login
     }
 
     /**
@@ -79,7 +89,8 @@ public class AppController {
      */
     public void startApplication() {
         // Add the initial view (Login) to the frame
-        mainFrame.addView(loginView, MainApplicationFrame.LOGIN_PANEL);
+        // Ensure LoginView is added before showing it
+        mainFrame.addView(loginView, MainApplicationFrame.LOGIN_PANEL); 
         
         // Show the login view initially
         mainFrame.showView(MainApplicationFrame.LOGIN_PANEL);
@@ -119,33 +130,47 @@ public class AppController {
 
         switch (role) {
             case ADMINISTRATOR:
-                LOGGER.info("Navigating to Admin Dashboard...");
-                // TODO: Implement Admin Dashboard View creation and display
-                // if (adminDashboardView == null) adminDashboardView = new AdminDashboardView(...);
-                // mainFrame.addView(adminDashboardView, MainApplicationFrame.ADMIN_DASHBOARD_PANEL);
-                // mainFrame.showView(MainApplicationFrame.ADMIN_DASHBOARD_PANEL);
-                showPlaceholderView("Admin Dashboard Area", MainApplicationFrame.ADMIN_DASHBOARD_PANEL);
+                LOGGER.info("Navigating to Admin Module...");
+                // Initialize AdminController if it doesn't exist yet
+                if (adminController == null) {
+                    adminController = new AdminController(this, mainFrame, userDAO, courseDAO);
+                    // initializeViews() is called within AdminController constructor
+                }
+                // Show the main admin dashboard view
+                adminController.showDashboard(); 
                 break;
             case TEACHER:
-                LOGGER.info("Navigating to Teacher Dashboard...");
-                // TODO: Implement Teacher Dashboard View creation and display
-                // if (teacherDashboardView == null) teacherDashboardView = new TeacherDashboardView(...);
-                // mainFrame.addView(teacherDashboardView, MainApplicationFrame.TEACHER_DASHBOARD_PANEL);
-                // mainFrame.showView(MainApplicationFrame.TEACHER_DASHBOARD_PANEL);
-                 showPlaceholderView("Teacher Dashboard Area", MainApplicationFrame.TEACHER_DASHBOARD_PANEL);
-                break;
+                 LOGGER.info("Navigating to Teacher Dashboard...");
+                 // Initialize TeacherController if it doesn't exist yet
+                 if (teacherController == null) {
+                     // Pass required services, frame, session, and this controller
+                     teacherController = new TeacherController(this, mainFrame, 
+                                                               userService, courseService, messageService, 
+                                                               userDAO, courseDAO, enrollmentDAO, 
+                                                               userSession);
+                     // initializeViews() is called within TeacherController constructor
+                 }
+                 // Show the main teacher dashboard view
+                 teacherController.showDashboard();
+                 break;
             case STUDENT:
-                 LOGGER.info("Navigating to Student Dashboard...");
-                 // TODO: Implement Student Dashboard View creation and display
-                 // if (studentDashboardView == null) studentDashboardView = new StudentDashboardView(...);
-                 // mainFrame.addView(studentDashboardView, MainApplicationFrame.STUDENT_DASHBOARD_PANEL);
-                 // mainFrame.showView(MainApplicationFrame.STUDENT_DASHBOARD_PANEL);
-                 showPlaceholderView("Student Dashboard Area", MainApplicationFrame.STUDENT_DASHBOARD_PANEL);
-                break;
+                  LOGGER.info("Navigating to Student Dashboard...");
+                  // Initialize StudentController if it doesn't exist yet
+                  if (studentController == null) {
+                      // Pass required DAOs, frame, session, and this controller
+                      studentController = new StudentController(this, mainFrame, 
+                                                                userDAO, courseDAO, enrollmentDAO, 
+                                                                messageService, // Add MessageService
+                                                                userSession);
+                      // initializeViews() is called within StudentController constructor
+                  }
+                  // Show the main student dashboard view
+                  studentController.showDashboard();
+                  break;
             default:
-                 LOGGER.warning("Unknown user role: " + role + ". Returning to login.");
-                 showLoginScreen();
-                break;
+                  LOGGER.warning("Unknown user role: " + role + ". Returning to login.");
+                  showLoginScreen();
+                 break;
         }
     }
     
@@ -187,20 +212,28 @@ public class AppController {
     }
     
     /**
+     * Gets the currently logged-in user from the session.
+     * @return The logged-in User object, or null if no user is logged in.
+     */
+    public User getCurrentUser() {
+        return userSession.getCurrentUser();
+    }
+
+    /**
      * Main entry point for the application.
      */
-     public static void main(String[] args) {
-         // Set Look and Feel (Optional but recommended)
-         try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Nimbus L&F not found, using default.");
-        }
+    public static void main(String[] args) {
+        // Set Look and Feel (Optional but recommended)
+        try {
+           for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+               if ("Nimbus".equals(info.getName())) {
+                   UIManager.setLookAndFeel(info.getClassName());
+                   break;
+               }
+           }
+       } catch (Exception e) {
+           System.out.println("Nimbus L&F not found, using default.");
+       }
         
         // Ensure UI updates are on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
